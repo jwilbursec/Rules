@@ -1,0 +1,169 @@
+<!-- Local rules -->
+<!-- Modify it at your will. -->
+<!-- Copyright (C) 2015-2019, Wazuh Inc. -->
+<!-- Example -->
+<group name="local,syslog,sshd,">
+	<!-- Powershell rules -->
+	<rule id="100002" level="12">
+		<if_group>sysmon_event1</if_group>
+		<field name="win.eventdata.parentimage">powershell.exe|word.exe|outlook.com</field>
+		<field name="win.eventdata.image">powershell.exe|wmic.exe|cmd.exe|certutil.exe|wscript.exe</field>
+		<description>Sysmon - Event 1: Bad exe: $(win.eventdata.parentImage)</description>
+		<group>sysmon_event1,powershell_execution</group>
+	</rule>
+	<rule id="100003" level="12">
+		<if_group>sysmon_event1</if_group>
+		<field name="win.eventdata.image">powershell.exe</field>
+		<description>Sysmon - Suspicious Usage - powershell.exe</description>
+	</rule>
+	<rule id="100004" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.image">powershell.exe</field>
+		<field name="win.eventdata.commandline">http|https|-enc|IEX</field>
+		<description>Sysmon - Suspicious Download - powershell.exe</description>
+	</rule>
+  <!--Get notification when agents disconnect/connect, lower the level if enabled in an enterprise-->
+	<rule id="100005" level="12">
+		<if_sid>500</if_sid>
+		<match>Agent disconnected</match>
+		<description>Ossec agent disconnected.</description>
+		<group>pci_dss_10.6.1,pci_dss_10.2.6,gpg13_10.1,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.6,nist_800_53_AU.14,nist_800_53_AU.5,</group>
+	</rule>
+	<rule id="100006" level="12">
+		<if_sid>500</if_sid>
+		<match>Agent started</match>
+		<description>New ossec agent connected.</description>
+		<group>pci_dss_10.6.1,gpg13_10.1,gdpr_IV_35.7.d,</group>
+	</rule>
+  <!--Honeypot rule to alert on successful auth-->
+	<rule id="100007" level="12">
+		<if_sid>60106</if_sid>
+		<field name="win.system.computer">branch5</field>
+		<description>Windows Logon Success.</description>
+		<group>authentication_success,pci_dss_10.2.5,gpg13_7.1,gpg13_7.2,gdpr_IV_32.2,</group>
+	</rule>
+	<!-- Defender eventid alerting https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-antivirus/troubleshoot-windows-defender-antivirus -->
+	<rule id="100008" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.commandline">DisableRealtimeMonitoring $true</field>
+		<description>Defender Realtime Monitoring Disabled</description>
+		<group>defender</group>
+	</rule>
+	<rule id="100009" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^5001$</field>
+		<description>Windows Defender Real-time Protection was disabled.</description>
+		<group>defender</group>
+	</rule>
+	<rule id="100010" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^1006$|^1116$</field>
+		<description>Windows Defender found malware or other potentially unwanted software. </description>
+		<group>defender</group>
+	</rule>
+	<rule id="100011" level="11">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^1008$</field>
+		<description>Windows Defender found malware and failed to clean it. </description>
+		<group>defender</group>
+	</rule>
+	<rule id="100012" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^1015$</field>
+		<description>Windows Defender detected suspicious behavior. </description>
+		<group>defender</group>
+	</rule>
+	<rule id="100013" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^5010$</field>
+		<description> Scanning for malware and other potentially unwanted software is disabled.</description>
+		<group>defender</group>
+	</rule>
+	<rule id="100014" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^5012$</field>
+		<description> Scanning for viruses is disabled. </description>
+		<group>defender</group>
+	</rule>
+	<rule id="100015" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^5007$</field>
+		<field name="win.eventdata.new Value">DisableBlockAtFirstSeen = 0x1</field>
+		<description>Windows Defender Block At First Seen disabled</description>
+		<group>defender</group>
+	</rule>
+	<rule id="100016" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^5007$</field>
+		<field name="win.eventdata.new Value">DisableBehaviorMonitoring</field>
+		<description> Windows Defender Behavior Monitoring Was Configured</description>
+		<group>defender</group>
+	</rule>
+	<rule id="100017" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^5007$</field>
+		<field name="win.eventdata.new Value">DisableRealtimeMonitoring</field>
+		<description> Windows Defender Realtime Monitoring Was Configured</description>
+		<group>defender</group>
+	</rule>
+	<rule id="100018" level="12">
+		<if_sid>62100</if_sid>
+		<field name="win.system.eventID">^5007$</field>
+		<field name="win.eventdata.new Value">C:\\ = 0x0|D:\\ = 0x0|E:\\ = 0x0|F:\\ = 0x0</field>
+		<description> Windows Defender Exclusion for Attached Drive</description>
+		<group>defender</group>
+	</rule>
+	<!-- Monitor CrowdStrike Sensor https://www.komodosec.com/post/bypassing-crowdstrike -->
+	<rule id="100019" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.commandline">stop csfalconserivce</field>
+		<description>CrowdStrike Sensor has been stopped</description>
+		<group>MITRE,T1089</group>
+	</rule>
+  <!--monitor sysmon-->
+	<rule id="100020" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.image">sysmon64.exe</field>
+		<field name="win.eventdata.commandline">-u</field>
+		<description>Sysmon has been uninstalled</description>
+		<group>MITRE,T1089</group>
+	</rule>
+	<rule id="100021" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.image">fltmc.exe</field>
+		<field name="win.eventdata.commandline">unload</field>
+		<description>Unload Filter Driver, possibly sysmon</description>
+		<group>MITRE,T1089,sysmon</group>
+	</rule>
+  <!--ATT&CK Execution-->
+	<rule id="100022" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.image">cmstp.exe</field>
+		<field name="win.eventdata.commandline">.inf</field>
+		<description>CMSTP Executing Remote Scriptlet - T1191</description>
+		<group>MITRE,T1089,Execution,sysmon</group>
+	</rule>
+	<rule id="100023" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.image">cmstp.exe</field>
+		<field name="win.eventdata.commandline">.inf</field>
+		<field name="win.eventdata.commandline">/au</field>
+		<description>CMSTP Executing UAC Bypass - T1191</description>
+		<group>MITRE,T1089,Execution,sysmon</group>
+	</rule>
+	<rule id="100024" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.image">hh.exe</field>
+		<field name="win.eventdata.commandline">.chm</field>
+		<field name="win.eventdata.commandline">http|https</field>
+		<description>Compiled HTML Help Remote Payload - T1223</description>
+		<group>MITRE,T1223,Execution,sysmon</group>
+	</rule>
+	<rule id="100025" level="12">
+		<if_sid>100003</if_sid>
+		<field name="win.eventdata.image">control.exe</field>
+		<field name="win.eventdata.commandLine">.cpl</field>
+		<description>Compiled HTML Help Local Payload - T1196</description>
+		<group>MITRE,T1196,Execution,sysmon</group>
+	</rule>
+</group>
