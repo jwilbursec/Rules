@@ -1,4 +1,4 @@
 # Rules
 Wazuh/OSSEC Rules
 
-These are custom rules I've created that map to MITRE ATT&CK.
+These are custom rules I've created, some map to ATT&CK some don't.
